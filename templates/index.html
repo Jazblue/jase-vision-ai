@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jase Vision AI</title>
+<style>
+body{font-family:Arial,sans-serif;background:#111827;color:white;text-align:center;padding:30px}
+h1{color:#60a5fa}video,#preview{width:100%;max-width:640px;border-radius:12px;background:#000}
+button{padding:13px 22px;margin:10px;border:0;border-radius:8px;cursor:pointer;font-size:16px}
+button:disabled{opacity:.5;cursor:not-allowed}#start{background:#2563eb;color:white}
+#analyse,#uploadButton{background:#16a34a;color:white}#status{color:#93c5fd}
+#result{max-width:640px;margin:20px auto;padding:18px;background:#1f2937;border-radius:10px;text-align:left;white-space:pre-wrap}
+.upload-area{max-width:640px;margin:30px auto;padding:20px;background:#1f2937;border-radius:12px}
+input[type=file]{display:block;margin:18px auto;max-width:100%}
+</style>
+</head>
+<body>
+<h1>Jase Vision AI</h1>
+<p>Your AI vision assistant, powered by Ollama and MiniCPM.</p>
+<h2>Use your webcam</h2>
+<video id="camera" autoplay playsinline></video>
+<canvas id="snapshot" hidden></canvas>
+<div><button id="start">Start webcam</button><button id="analyse" disabled>Analyse webcam</button></div>
+<div class="upload-area">
+<h2>Upload an image</h2><p>Choose a JPG, PNG or WEBP image (maximum 8 MB).</p>
+<input type="file" id="imageFile" accept="image/jpeg,image/png,image/webp">
+<img id="preview" hidden alt="Selected image preview">
+<div><button id="uploadButton" disabled>Analyse uploaded image</button></div>
+</div>
+<p id="status">Camera not started.</p>
+<div id="result">Your AI's observations will appear here.</div>
+<script>
+const video=document.getElementById("camera"),canvas=document.getElementById("snapshot");
+const startButton=document.getElementById("start"),analyseButton=document.getElementById("analyse");
+const uploadButton=document.getElementById("uploadButton"),imageFile=document.getElementById("imageFile");
+const preview=document.getElementById("preview"),status=document.getElementById("status");
+const result=document.getElementById("result");
+let cameraStream=null,selectedFile=null,previewUrl=null;
+function setBusy(busy){analyseButton.disabled=busy||!cameraStream;uploadButton.disabled=busy||!selectedFile}
+startButton.addEventListener("click",async()=>{
+ try{cameraStream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+ video.srcObject=cameraStream;setBusy(false);status.textContent="Webcam active. Ready to analyse."}
+ catch(error){status.textContent="Camera error: "+error.message}
+});
+imageFile.addEventListener("change",()=>{
+ selectedFile=imageFile.files[0]||null;
+ if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;
+ if(!selectedFile){preview.hidden=true;uploadButton.disabled=true;return}
+ const allowedTypes=["image/jpeg","image/png","image/webp"];
+ if(!allowedTypes.includes(selectedFile.type)||selectedFile.size>8*1024*1024){
+  status.textContent="Choose a JPG, PNG or WEBP image under 8 MB.";
+  imageFile.value="";selectedFile=null;preview.hidden=true;uploadButton.disabled=true;return
+ }
+ previewUrl=URL.createObjectURL(selectedFile);preview.src=previewUrl;preview.hidden=false;
+ uploadButton.disabled=false;status.textContent="Image selected. Ready to analyse."
+});
+uploadButton.addEventListener("click",async()=>{
+ if(!selectedFile)return;setBusy(true);status.textContent="Uploading image to MiniCPM...";
+ result.textContent="Thinking...";const formData=new FormData();formData.append("image",selectedFile);
+ try{const response=await fetch("/upload",{method:"POST",body:formData});const data=await response.json();
+  if(!response.ok)throw new Error(data.error||"Upload failed");
+  result.textContent=data.description;status.textContent="Image analysis complete."
+ }catch(error){result.textContent=error.message;status.textContent="Something went wrong."}
+ finally{setBusy(false)}
+});
+analyseButton.addEventListener("click",async()=>{
+ if(!cameraStream)return;setBusy(true);status.textContent="Sending webcam image to MiniCPM...";
+ result.textContent="Thinking...";canvas.width=640;canvas.height=480;
+ canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+ const image=canvas.toDataURL("image/jpeg",.8);
+ try{const response=await fetch("/analyse",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Analysis failed");
+  result.textContent=data.description;status.textContent="Analysis complete."
+ }catch(error){result.textContent=error.message;status.textContent="Something went wrong."}
+ finally{setBusy(false)}
+});
+window.addEventListener("beforeunload",()=>{
+ if(cameraStream)cameraStream.getTracks().forEach(track=>track.stop());
+ if(previewUrl)URL.revokeObjectURL(previewUrl)
+});
+</script>
+</body>
+</html>

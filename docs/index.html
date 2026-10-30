@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Jase Vision AI is a local vision assistant powered by MiniCPM-V and Ollama, with webcam capture and image uploads.">
+<title>Jase Vision AI | Local Vision, Private Infrastructure</title>
+<style>
+:root{color-scheme:dark;--bg:#08111f;--line:#243650;--text:#e8f0fb;--muted:#a9bad0;--blue:#60a5fa;--cyan:#67e8f9;--green:#86efac}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(ellipse at 15% 0%,#17345b 0,transparent 42%),var(--bg);color:var(--text);line-height:1.65}
+.wrap{width:min(1080px,calc(100% - 36px));margin:auto}.nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0;color:var(--muted)}.brand{font-weight:800;color:white;letter-spacing:.04em}.nav a{color:var(--cyan);text-decoration:none}
+.hero{padding:78px 0 64px}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.16em;font-size:.8rem;font-weight:700}.hero h1{font-size:clamp(2.7rem,7vw,5.2rem);line-height:1.04;letter-spacing:-.05em;margin:16px 0}.hero p{max-width:720px;color:var(--muted);font-size:1.18rem}.actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:28px}.btn{display:inline-block;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700}.primary{background:var(--blue);color:#07111f}.secondary{border:1px solid #54708f;color:var(--text)}
+.pills{display:flex;gap:9px;flex-wrap:wrap;margin-top:28px}.pill{border:1px solid var(--line);background:#0e1a2a;color:#c9d8ea;padding:6px 11px;border-radius:999px;font-size:.88rem}
+section{padding:38px 0}.section-title{font-size:1.8rem;margin:0 0 18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}.card{background:linear-gradient(160deg,#13243a,#0d192a);border:1px solid var(--line);border-radius:16px;padding:22px}.card h3{margin:0 0 8px;color:#dcecff}.card p{color:var(--muted);margin:0}.flow{font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap;background:#07101c;border:1px solid var(--line);padding:22px;border-radius:14px;color:#c5ddf6;overflow:auto}
+.notice{border-left:4px solid var(--green);padding:14px 18px;background:#10251f;border-radius:0 10px 10px 0;color:#d9fbe6}.muted{color:var(--muted)}footer{border-top:1px solid var(--line);margin-top:46px;padding:28px 0;color:var(--muted);font-size:.9rem}
+@media(max-width:600px){.hero{padding:54px 0 40px}.nav{gap:12px;flex-wrap:wrap}}
+</style></head><body><div class="wrap">
+<nav class="nav"><div class="brand">JASE / VISION AI</div><div><a href="https://github.com/Jazblue/jase-vision-ai">Source code ↗</a></div></nav>
+<header class="hero"><div class="eyebrow">A local-first AI vision experiment</div>
+<h1>Give a local AI<br>something to see.</h1>
+<p>Jase Vision AI is a browser-based vision assistant powered by MiniCPM-V running locally through Ollama. Visitors can explicitly share a webcam frame or upload an image and receive a natural-language description from the locally hosted model.</p>
+<div class="actions"><a class="btn primary" href="https://vision.jasoncv.click">Open invite-only demo ↗</a><a class="btn secondary" href="https://github.com/Jazblue/jase-vision-ai">Explore the source ↗</a></div>
+<div class="pills"><span class="pill">MiniCPM-V</span><span class="pill">Ollama</span><span class="pill">Python / Flask</span><span class="pill">Browser webcam</span><span class="pill">Image upload</span><span class="pill">Cloudflare Access</span></div></header>
+<section><h2 class="section-title">What it can do</h2><div class="grid">
+<article class="card"><h3>Live webcam capture</h3><p>The visitor chooses to start their own browser camera and explicitly grants permission before a frame can be captured.</p></article>
+<article class="card"><h3>Image uploads</h3><p>Accepts JPG, PNG and WEBP files, with an 8 MB per-image limit and basic file-signature checks.</p></article>
+<article class="card"><h3>Local model inference</h3><p>Flask forwards image bytes to Ollama on the host computer, where MiniCPM-V generates a concise description.</p></article>
+<article class="card"><h3>Invite-only access</h3><p>The hosted demonstration sits behind Cloudflare Access. The public repository does not grant access to the running service.</p></article>
+</div></section>
+<section><h2 class="section-title">How the request flows</h2><div class="flow">Visitor browser
+  ├─ webcam permission and frame capture
+  └─ image file selection
+          │ HTTPS
+          ▼
+Cloudflare Access (invite-only)
+          │
+          ▼
+Cloudflare Tunnel
+          │
+          ▼
+Flask application (127.0.0.1)
+          │
+          ▼
+Ollama local API
+          │
+          ▼
+MiniCPM-V vision model
+          │
+          ▼
+Description returned to the visitor's request</div></section>
+<section><h2 class="section-title">Built with</h2><div class="grid">
+<article class="card"><h3>Python + Flask</h3><p>Small web backend with separate webcam and multipart upload endpoints.</p></article>
+<article class="card"><h3>Ollama</h3><p>Local model runtime serving the vision-language model through its local API.</p></article>
+<article class="card"><h3>MiniCPM-V</h3><p>A compact vision-language model used to interpret the submitted image.</p></article>
+<article class="card"><h3>Cloudflare</h3><p>Optional HTTPS tunnel and identity-aware access layer for controlled remote testing.</p></article>
+</div></section>
+<section><h2 class="section-title">Privacy and current status</h2>
+<div class="notice"><strong>Invite-only demo.</strong> The live service is not open for unrestricted public use. Access is controlled separately from this public source repository.</div>
+<p class="muted">The Flask application processes image bytes in memory and does not save uploads to a permanent application folder. The browser sends the image to the hosted application for inference. Other components such as the browser, operating system, tunnel provider and model runtime may process technical metadata under their own policies.</p>
+<p class="muted">This is a working personal project and controlled demonstration, not a hardened multi-tenant production service. Rate limiting, per-user quotas, malware scanning, a job queue and concurrency scheduling remain future improvements.</p></section>
+<footer>Jase Vision AI · A local-first vision AI project · <a href="https://github.com/Jazblue/jase-vision-ai">GitHub repository</a></footer>
+</div></body></html>
